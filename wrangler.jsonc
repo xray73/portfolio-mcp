@@ -1,0 +1,16 @@
+{
+  "name": "portfolio-mcp",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-06-30",
+  "compatibility_flags": ["nodejs_compat"],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "db_invplan",
+      "database_id": "cae42222-2d53-4781-acc3-3f401497a7c9"
+    }
+  ],
+  "observability": {
+    "enabled": true
+  }
+}
