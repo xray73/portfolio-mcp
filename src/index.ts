@@ -27,10 +27,16 @@ export class PortfolioMCP extends McpAgent {
         ).all();
 
         const alertCount = {
-          alert: results.filter((r: any) => r.stato === "alert").length,
-          vicino: results.filter((r: any) => r.stato === "vicino").length,
-          ok: results.filter((r: any) => r.stato === "ok").length,
-        };
+  alert: results.filter((r: any) =>
+    String(r.stato).toUpperCase().includes("ALERT")
+  ).length,
+  vicino: results.filter((r: any) =>
+    String(r.stato).toUpperCase().includes("VICINO")
+  ).length,
+  ok: results.filter((r: any) =>
+    String(r.stato).toUpperCase().includes("OK")
+  ).length,
+};
 
         const payload = {
           generated_at: new Date().toISOString(),
