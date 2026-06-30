@@ -138,12 +138,24 @@ export class PortfolioMCP extends McpAgent {
     );
 
     // ── get_report ─────────────────────────────────────────────
-    this.server.tool(
+this.server.tool(
       "get_report",
-      "Restituisce il payload aggregato completo per la generazione del report trimestrale: parametri macro, alert_count, etf_riepilogo, etf_prezzi (ultimi 180 giorni), scenario_scores, scenario_prevalente, log_azioni, etf_registry.",
-      {},
-      async () => {
+      "Restituisce il payload aggregato completo. Parametro opzionale finestra: week | month | 3m | 6m (default) | ytd — controlla la finestra temporale dei prezzi ETF.",
+      { finestra: z.enum(["week", "month", "3m", "6m", "ytd"]).optional() },
+      async ({ finestra }) => {
         const env = this.env as Env;
+
+        const finestraMap: Record<string, string> = {
+          week:  "-7 days",
+          month: "-1 month",
+          "3m":  "-3 months",
+          "6m":  "-6 months",
+        };
+
+        const dalSQL = finestra === "ytd"
+          ? `date(strftime('%Y', 'now') || '-01-01')`
+          : `date('now', '${finestraMap[finestra ?? "6m"]}')`;
+
         const macro = await env.DB.prepare(`SELECT nome, valore, stato, data_riferimento, note FROM t_macro_params ORDER BY nome`).all();
         const alertCount = {
           alert: macro.results.filter((r: any) => String(r.stato).toUpperCase().includes("ALERT")).length,
@@ -154,14 +166,16 @@ export class PortfolioMCP extends McpAgent {
           `SELECT r.ticker, reg.nome, reg.isin, reg.peso_target, reg.categoria, r.prezzo_attuale, r.prezzo_inizio_anno, r.ytd_pct, ROUND(r.ytd_pct * r.peso / 100, 4) AS contributo_ponderato FROM t_etf_riepilogo r LEFT JOIN t_etf_registry reg ON r.ticker = reg.ticker WHERE r.peso > 0 ORDER BY r.ticker`
         ).all();
         const prezzi = await env.DB.prepare(
-          `SELECT ticker, data, close FROM t_etf_prezzi WHERE data >= date('now', '-180 days') AND ticker IN ('GGRA.MI','EUNL.DE','EXUS.MI','VGEA.MI','IUS5.DE','PHAU.MI') ORDER BY ticker, data`
+          `SELECT ticker, data, close FROM t_etf_prezzi WHERE data >= ${dalSQL} AND ticker IN ('GGRA.MI','EUNL.DE','EXUS.MI','VGEA.MI','IUS5.DE','PHAU.MI') ORDER BY ticker, data`
         ).all();
         const scenari = await env.DB.prepare(`SELECT * FROM t_scenario_scores ORDER BY scenario`).all();
         const prevalente = await env.DB.prepare(`SELECT * FROM v_scenario_prevalente LIMIT 1`).all();
         const log = await env.DB.prepare(`SELECT * FROM t_log_azioni ORDER BY data DESC LIMIT 20`).all();
         const registry = await env.DB.prepare(`SELECT * FROM t_etf_registry ORDER BY ticker`).all();
+
         const payload = {
           generated_at: new Date().toISOString(),
+          finestra_prezzi: finestra ?? "6m",
           parametri: macro.results,
           alert_count: alertCount,
           etf_riepilogo: riepilogo.results,
@@ -171,6 +185,7 @@ export class PortfolioMCP extends McpAgent {
           log_azioni: log.results,
           etf_registry: registry.results,
         };
+
         return {
           content: [{ type: "text", text: JSON.stringify(payload, null, 2) }],
         };
