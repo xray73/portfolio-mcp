@@ -101,7 +101,7 @@ export class PortfolioMCP extends McpAgent {
       async () => {
         const env = this.env as Env;
         const { results } = await env.DB.prepare(
-          'SELECT ticker, nome, peso_target AS peso, prezzo_attuale, ytd_pct, ROUND(ytd_pct * peso_target / 100, 4) AS contributo_ponderato FROM t_etf_riepilogo ORDER BY ticker'
+          'SELECT ticker, nome, peso, prezzo_attuale, ytd_pct, ROUND(ytd_pct * peso / 100, 4) AS contributo_ponderato FROM t_etf_riepilogo ORDER BY ticker'
         ).all();
 
         return {
@@ -118,7 +118,7 @@ export class PortfolioMCP extends McpAgent {
       async () => {
         const env = this.env as Env;
         const { results } = await env.DB.prepare(
-          `SELECT ticker, peso_target AS peso, prezzo_attuale, ytd_pct, ROUND(ytd_pct * peso_target / 100, 4) AS contributo_ponderato FROM t_etf_riepilogo`
+          `SELECT ticker, peso, prezzo_attuale, ytd_pct, ROUND(ytd_pct * peso / 100, 4) AS contributo_ponderato FROM t_etf_riepilogo`
         ).all();
 
         const ytdPonderato = results.reduce(
