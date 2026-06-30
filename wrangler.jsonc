@@ -10,6 +10,20 @@
       "database_id": "cae42222-2d53-4781-acc3-3f401497a7c9"
     }
   ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "MCP_OBJECT",
+        "class_name": "PortfolioMCP"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["PortfolioMCP"]
+    }
+  ],
   "observability": {
     "enabled": true
   }
